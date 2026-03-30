@@ -1,0 +1,96 @@
+# TODO 
+# Add readme for how to pass vars and the webhook that needs to be configured in the fork of this repo made by the user
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: ct-pipeline
+spec:
+  workspaces:
+    - name: shared-workspace
+    - name: model-workspace
+  params:
+    - name: GIT_URL
+      type: string
+      default: ""
+    - name: GIT_SHORT_REVISION
+      type: string
+      default: ""
+    - name: GIT_COMMIT_AUTHOR
+      type: string
+      default: ""
+    - default: "false"
+      name: GIT_SSL_VERIFY
+      type: string
+  tasks:
+    # Clone repository
+    - name: clone-repository
+      taskRef:
+        resolver: cluster
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: git-clone
+          - name: namespace
+            value: openshift-pipelines 
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+      params:
+        - name: URL
+          value: "$(params.GIT_URL)"
+        - name: REVISION
+          value: "main"
+        - name: SUBDIRECTORY
+          value: flightctl-demos
+        - name: DELETE_EXISTING
+          value: "true"
+        - name: SSL_VERIFY
+          value: "$(params.GIT_SSL_VERIFY)"
+     # Execute Data Science Pipeline
+    - name: execute-ds-pipeline
+      taskRef:
+        name: execute-ds-pipeline
+        kind: Task
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+      params:
+        - name: WORK_DIRECTORY
+          value: "flightctl-demos/demos/mlops-inference-stack-demo/deployment/opendatahub/kfp"
+    # Containerize the model (Build a modelcar)
+    - name: build-modelcar
+      taskRef:
+        name: build-modelcar
+        kind: Task
+      workspaces:
+        - name: output
+          workspace: model-workspace
+      params:
+        - name: WORK_DIRECTORY
+          value: "flightctl-demos/demos/mlops-inference-stack-demo/apps/modelcar"
+        - name: VERSION
+          value: "$(params.GIT_SHORT_REVISION)"
+      runAfter:
+        - execute-ds-pipeline
+    # Execute outer loop
+    - name: execute-outer-loop
+      taskRef:
+        name: execute-outer-loop
+        kind: Task
+      runAfter:
+        - build-modelcar
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+      params:
+        - name: VERSION
+          value: "$(params.GIT_SHORT_REVISION)"
+        - name: WORK_DIRECTORY
+          value: "flightctl-demos/demos/mlops-inference-stack-demo"
+        - name: GIT_URL
+          value: "$(params.GIT_URL)"         
+  results:
+    - name: KFP_RUN_ID
+      description: Run ID of the Data Science Pipeline
+      value: "$(tasks.execute-ds-pipeline.results.KFP_RUN_ID)"

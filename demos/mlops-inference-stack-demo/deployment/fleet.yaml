@@ -1,0 +1,25 @@
+apiVersion: flightctl.io/v1beta1
+kind: Fleet
+metadata:
+  name: mlops-inference-stack
+spec:
+  selector:
+    matchLabels:
+      project: mlops-inference-stack
+  template:
+    metadata:
+      labels:
+        fleet: mlops-inference-stack
+    spec:
+      os:
+        image: quay.io/flightctl-demos/mlops-inference-stack
+      applications:
+        - name: inference-stack
+          appType: quadlet
+          image: quay.io/flightctl-demos/inference-stack-quadlet
+      config:
+      - name: inference-server-metrics
+        gitRef: 
+          repository: mlops-inference-stack-demo
+          targetRevision: main
+          path: /demos/mlops-inference-stack-demo/configuration

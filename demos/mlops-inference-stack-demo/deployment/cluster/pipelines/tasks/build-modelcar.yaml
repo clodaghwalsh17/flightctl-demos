@@ -1,0 +1,23 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: build-modelcar
+spec:
+  workspaces:
+    - name: output
+  params:
+    - name: WORK_DIRECTORY
+      description: Directory to use
+      type: string
+    - name: VERSION
+      description: Version of the application
+      type: string
+  steps:
+    - name: build
+      workingDir: $(workspaces.output.path)
+      image: quay.io/openshift/origin-cli:4.14
+      script: |
+        #!/bin/sh
+        oc new-build --binary --name=sample-chat-model -l app=sample-chat-model -l app.kubernetes.io/name=sample-chat-model --strategy=docker || rc=$?
+        oc start-build sample-chat-model --from-dir=. --follow --wait
+        oc tag sample-chat-model:latest sample-chat-model:$(params.VERSION)

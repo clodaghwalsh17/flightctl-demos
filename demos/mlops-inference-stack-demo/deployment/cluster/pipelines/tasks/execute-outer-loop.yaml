@@ -1,0 +1,67 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: execute-outer-loop
+spec:
+  workspaces:
+    - name: output
+  params:
+    - name: VERSION
+      description: Version of the application
+      type: string
+    - name: GIT_URL
+      description: URL of Git repository
+      type: string
+    - name: WORK_DIRECTORY
+      description: Directory to use
+      type: string
+  steps:
+    - name: patch-modelcar-quadlet
+      workingDir: $(workspaces.output.path)/$(params.WORK_DIRECTORY)/quadlets
+      image: quay.io/redhat-cop/tekton-task-helm:3.6.3
+      script: |
+        #!/bin/bash
+        sed -i "s|Image=.*|Image=image-registry.openshift-image-registry.svc:5000/sample-chat-model:${params.VERSION}|" model-car.container
+    - name: build-inference-stack-quadlet
+      workingDir: $(workspaces.output.path)/$(params.WORK_DIRECTORY)/quadlets
+      image: quay.io/openshift/origin-cli:4.14
+      script: |
+        #!/bin/sh
+        oc new-build --binary --name=inference-stack-quadlet -l app=inference-stack-quadlet -l app.kubernetes.io/name=inference-stack-quadlet --strategy=docker || rc=$?
+        oc start-build inference-stack-quadlet --from-dir=. --follow --wait
+        oc tag inference-stack-quadlet:latest inference-stack-quadlet:$(params.VERSION)
+    - name: patch-fleet-spec
+      workingDir: $(workspaces.output.path)/$(params.WORK_DIRECTORY)/deployment
+      image: quay.io/redhat-cop/tekton-task-helm:3.6.3
+      script: |
+        #!/bin/sh
+        yq eval -i .spec.template.spec.applications[0].image=\"image-registry.openshift-image-registry.svc:5000/inference-stack-quadlet:$(params.VERSION)\" "fleet.yaml"
+    - name: commit-changes
+      workingDir: $(workspaces.output.path)/$(params.WORK_DIRECTORY)
+      image: quay.io/redhat-cop/ubi8-git:latest
+      script: |
+        #!/bin/sh
+        # Commit the changes 
+        git config --global user.email "tekton@mlops.bot.com"
+        git config --global user.name "Tekton"
+        git config --global push.default simple
+        git config --global --add safe.directory '*'
+        git add quadlets/model-car.container
+        git add deployment/fleet.yaml
+        git commit -m "AUTOMATED COMMIT - Updated model and inference stack to version $(params.VERSION)" || rc=$?
+        git remote set-url origin $(params.GIT_URL)
+        git push origin HEAD:main
+    - name: rollout-fleet
+      workingDir: $(workspaces.output.path)/$(params.WORK_DIRECTORY)/deployment
+      image: quay.io/openshift/origin-cli:4.12
+      script: |
+        #!/bin/sh
+        # Download FlightCtl CLI
+        curl -sLo /tmp/flightctl https://github.com/flightctl/flightctl/releases/latest/download/flightctl-linux-amd64
+        chmod +x /tmp/flightctl
+        # Login and apply fleet spec
+        FLIGHCTL_URL=$(oc get secret flightctl-credentials -n mlops-kfp -o jsonpath='{.data.url}' | base64 --decode)
+        FLIGHCTL_USER=$(oc get secret flightctl-credentials -n mlops-kfp -o jsonpath='{.data.user}' | base64 --decode)
+        FLIGHCTL_PASSWORD=$(oc get secret flightctl-credentials -n mlops-kfp -o jsonpath='{.data.password}' | base64 --decode)
+        /tmp/flightctl login -k $FLIGHTCTL_URL -u $FLIGHTCTL_USER -p $FLIGHCTL_PASSWORD
+        /tmp/flightctl apply -f fleet.yaml
