@@ -40,7 +40,8 @@ spec:
         - name: URL
           value: "$(params.GIT_URL)"
         - name: REVISION
-          value: "main"
+        # TODO reset to main
+          value: "mlops-inference-stack"
         - name: SUBDIRECTORY
           value: flightctl-demos
         - name: DELETE_EXISTING

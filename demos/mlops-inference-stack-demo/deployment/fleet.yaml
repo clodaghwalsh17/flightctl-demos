@@ -20,6 +20,7 @@ spec:
       config:
       - name: inference-server-metrics
         gitRef: 
-          repository: mlops-inference-stack-demo
-          targetRevision: main
+          repository: mlops-inference-stack
+          # TODO reset to main
+          targetRevision: mlops-inference-server-demo
           path: /demos/mlops-inference-stack-demo/configuration

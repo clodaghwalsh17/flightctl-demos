@@ -50,7 +50,8 @@ spec:
         git add deployment/fleet.yaml
         git commit -m "AUTOMATED COMMIT - Updated model and inference stack to version $(params.VERSION)" || rc=$?
         git remote set-url origin $(params.GIT_URL)
-        git push origin HEAD:main
+        git push origin HEAD
+        # TODO revert back to : git push origin HEAD:main
     - name: rollout-fleet
       workingDir: $(workspaces.output.path)/$(params.WORK_DIRECTORY)/deployment
       image: quay.io/openshift/origin-cli:4.12
