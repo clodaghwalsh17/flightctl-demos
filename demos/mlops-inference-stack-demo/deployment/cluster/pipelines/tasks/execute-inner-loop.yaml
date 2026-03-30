@@ -50,7 +50,7 @@ spec:
       # start a run
       run_id = client.create_run_from_pipeline_func(
           inner_loop_pipeline,
-          experiment_name=inner_loop,
+          experiment_name="mlops-inner_loop",
           namespace=mlops-kfp,
           enable_caching=True
       )
