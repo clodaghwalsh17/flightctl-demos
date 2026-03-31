@@ -51,7 +51,7 @@ spec:
       run_id = client.create_run_from_pipeline_func(
           inner_loop_pipeline,
           experiment_name="mlops-inner_loop",
-          namespace=mlops-kfp,
+          namespace=namespace,
           enable_caching=True
       )
 

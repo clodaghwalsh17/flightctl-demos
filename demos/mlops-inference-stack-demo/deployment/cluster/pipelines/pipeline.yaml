@@ -43,7 +43,7 @@ spec:
         # TODO reset to main
           value: "mlops-inference-stack"
         - name: SUBDIRECTORY
-          value: flightctl-demos
+          value: "flightctl-demos"
         - name: DELETE_EXISTING
           value: "true"
         - name: SSL_VERIFY
@@ -59,6 +59,8 @@ spec:
       params:
         - name: WORK_DIRECTORY
           value: "flightctl-demos/demos/mlops-inference-stack-demo/deployment/opendatahub/kfp"
+      runAfter:
+        - clone-repository
     # Containerize the model (Build a modelcar)
     - name: build-modelcar
       taskRef:
@@ -79,8 +81,6 @@ spec:
       taskRef:
         name: execute-outer-loop
         kind: Task
-      runAfter:
-        - build-modelcar
       workspaces:
         - name: output
           workspace: shared-workspace
@@ -90,7 +90,9 @@ spec:
         - name: WORK_DIRECTORY
           value: "flightctl-demos/demos/mlops-inference-stack-demo"
         - name: GIT_URL
-          value: "$(params.GIT_URL)"         
+          value: "$(params.GIT_URL)"
+      runAfter:
+        - build-modelcar      
   results:
     - name: KFP_RUN_ID
       description: Run ID of the Data Science Pipeline
