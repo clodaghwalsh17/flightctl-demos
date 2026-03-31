@@ -1,5 +1,5 @@
 # Stage 1: Download model
-FROM registry.access.redhat.com/ubi9/python-311:latest as base
+FROM registry.access.redhat.com/ubi9/python-311:latest AS base
 
 USER root
 
@@ -10,8 +10,7 @@ RUN pip install huggingface-hub
 COPY model-downloader.py .
 
 # Download the model (HF_TOKEN via build secret or env var)
-RUN --mount=type=secret,id=HF_TOKEN,required=false \
-    if [ -f /run/secrets/HF_TOKEN ]; then export HF_TOKEN=$(cat /run/secrets/HF_TOKEN); fi && \
+RUN --mount=type=secret,id=HF_TOKEN,env=HF_TOKEN \
     python model-downloader.py
 
 # Stage 2: Final minimal image with model files
