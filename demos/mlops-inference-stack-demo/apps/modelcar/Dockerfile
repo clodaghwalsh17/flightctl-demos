@@ -10,7 +10,8 @@ RUN pip install huggingface-hub
 COPY model-downloader.py .
 
 # Download the model (HF_TOKEN via build secret or env var)
-RUN --mount=type=secret,id=HF_TOKEN,env=HF_TOKEN \
+RUN --mount=type=secret,id=HF_TOKEN \
+    if [ -f /run/secrets/HF_TOKEN ]; then export HF_TOKEN=$(cat /run/secrets/HF_TOKEN); fi && \
     python model-downloader.py
 
 # Stage 2: Final minimal image with model files
