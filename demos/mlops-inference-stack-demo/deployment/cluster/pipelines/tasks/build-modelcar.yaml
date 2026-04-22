@@ -14,10 +14,13 @@ spec:
       type: string
   steps:
     - name: build
-      workingDir: $(workspaces.output.path)
-      image: quay.io/openshift/origin-cli:4.14
+      workingDir: $(workspaces.output.path)/$(params.WORK_DIRECTORY)
+      image: quay.io/appuio/oc:v4.19
       script: |
         #!/bin/sh
-        oc new-build --binary --name=sample-chat-model -l app=sample-chat-model -l app.kubernetes.io/name=sample-chat-model --strategy=docker || rc=$?
+        oc new-build . --name=sample-chat-model -l app=sample-chat-model -l app.kubernetes.io/name=sample-chat-model --strategy=docker || rc=$?
+        oc patch bc sample-chat-model --type=json -p "[{\"op\":\"add\",\"path\":\"/spec/strategy/dockerStrategy/env/name\",\"value\":\"HF_TOKEN\"}]"
+        oc patch bc sample-chat-model --type=json -p "[{\"op\":\"add\",\"path\":\"/spec/strategy/dockerStrategy/env/name/valueFrom/secretsKeyRef/name\",\"value\":\"hf-token\"}]"
+        oc patch bc sample-chat-model --type=json -p "[{\"op\":\"add\",\"path\":\"/spec/strategy/dockerStrategy/env/name/valueFrom/secretsKeyRef/key\",\"value\":\"HF_TOKEN\"}]"
         oc start-build sample-chat-model --from-dir=. --follow --wait
         oc tag sample-chat-model:latest sample-chat-model:$(params.VERSION)

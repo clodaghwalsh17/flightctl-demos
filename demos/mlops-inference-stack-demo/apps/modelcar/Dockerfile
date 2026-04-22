@@ -9,10 +9,8 @@ RUN pip install huggingface-hub
 # Copy the model download script
 COPY model-downloader.py .
 
-# Download the model (HF_TOKEN via build secret or env var)
-RUN --mount=type=secret,id=HF_TOKEN \
-    if [ -f /run/secrets/HF_TOKEN ]; then export HF_TOKEN=$(cat /run/secrets/HF_TOKEN); fi && \
-    python model-downloader.py
+# Download the model 
+RUN python model-downloader.py
 
 # Stage 2: Final minimal image with model files
 FROM registry.access.redhat.com/ubi9/ubi-micro:9.7
