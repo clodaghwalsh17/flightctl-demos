@@ -18,9 +18,8 @@ spec:
           appType: quadlet
           image: image-registry.openshift-image-registry.svc:5000/inference-stack-quadlet:3fb952ff11
       config:
-        - name: inference-server-metrics
-          gitRef:
-            repository: mlops-inference-stack
-            # TODO reset to main
-            targetRevision: mlops-inference-server-demo
-            path: /demos/mlops-inference-stack-demo/configuration
+      - name: inference-server-metrics
+        gitRef: 
+          repository: flightctl-demos
+          targetRevision: main
+          path: demos/mlops-inference-stack-demo/configuration
