@@ -23,7 +23,9 @@ spec:
       image: quay.io/appuio/oc:v4.19
       script: |
         #!/bin/bash
-        sed -i "s|Image=.*|Image=image-registry.openshift-image-registry.svc:5000/sample-chat-model:$(params.VERSION)|" model-car.container
+        CLUSTER_IMAGE_REGISTRY=$(oc get route default-route -n openshift-image-registry --template='{{ .spec.host }}')
+        NEW_IMAGE=$CLUSTER_IMAGE_REGISTRY/sample-chat-model:$(params.VERSION)
+        sed -i "s|Image=.*|Image=$NEW_IMAGE|" model-car.container
     - name: build-inference-stack-quadlet
       workingDir: $(workspaces.output.path)/$(params.WORK_DIRECTORY)/quadlets
       image: quay.io/appuio/oc:v4.19
@@ -37,7 +39,9 @@ spec:
       image: quay.io/appuio/oc:v4.19
       script: |
         #!/bin/sh
-        yq eval -i .spec.template.spec.applications[0].image=\"image-registry.openshift-image-registry.svc:5000/inference-stack-quadlet:$(params.VERSION)\" "fleet.yaml"
+        CLUSTER_IMAGE_REGISTRY=$(oc get route default-route -n openshift-image-registry --template='{{ .spec.host }}')
+        NEW_IMAGE=$CLUSTER_IMAGE_REGISTRY/inference-stack-quadlet:$(params.VERSION)
+        yq eval -i .spec.template.spec.applications[0].image=\"$NEW_IMAGE\" "fleet.yaml"
     - name: commit-changes
       workingDir: $(workspaces.output.path)/$(params.WORK_DIRECTORY)
       image: quay.io/appuio/oc:v4.19
