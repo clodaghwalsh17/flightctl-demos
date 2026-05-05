@@ -3,7 +3,7 @@ Description=Model Car Init Container
 Before=vllm-server.service
 
 [Container]
-Image=NEW_IMAGE
+Image=/sample-chat-model:c042d185dc
 Volume=model-storage.volume:/target:Z
 PodmanArgs=--user=0
 Exec=sh -c "cp -r /models/* /target/"

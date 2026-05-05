@@ -16,7 +16,7 @@ spec:
       applications:
         - name: inference-stack
           appType: quadlet
-          image: NEW_IMAGE
+          image: /inference-stack-quadlet:c042d185dc
       config:
         - name: inference-server-metrics
           gitRef:
