@@ -16,7 +16,7 @@ spec:
       applications:
         - name: inference-stack
           appType: quadlet
-          image: /inference-stack-quadlet:c042d185dc
+          image: default-route-openshift-image-registry.apps.rosa.catoconn-ray-et.bo0z.p3.openshiftapps.com/inference-stack-quadlet:89b380f48a
       config:
         - name: inference-server-metrics
           gitRef:
