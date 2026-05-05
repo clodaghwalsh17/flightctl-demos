@@ -5,11 +5,10 @@ metadata:
   name: ct-git-trigger 
 spec:
   interceptors:
-     - ref:
+    - ref:
         name: "cel" 
-       params:
-        - name: filter
-          value: (header.match('X-GitHub-Event', 'push') && body.ref.split('/')[2] == 'main')
+      params:
+        # TODO add back filter for main branch and push event
         - name: overlays
           value:
           - expression: body.head_commit.id.truncate(10)
@@ -22,10 +21,10 @@ spec:
     - name: git-short-revision
       value: $(extensions.truncated_sha)
     - name: gitrepositoryurl
-      value: $(body.repository.clone_url)
+      value: $(body.repository.html_url)
     - name: git-repo-name
       value: $(body.repository.name)
     - name: git-commit-author
-      value: $(body.pusher.username)
+      value: $(body.pusher.name)
   template: 
-    ref: ct-git-trigger-templates
+    ref: ct-git-trigger-template

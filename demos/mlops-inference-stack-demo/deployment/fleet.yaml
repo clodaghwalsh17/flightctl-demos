@@ -23,3 +23,4 @@ spec:
             repository: flightctl-demos
             targetRevision: main
             path: demos/mlops-inference-stack-demo/configuration
+

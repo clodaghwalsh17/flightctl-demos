@@ -35,6 +35,3 @@ spec:
         - name: shared-workspace
           persistentVolumeClaim:
             claimName: shared-workspace
-        - name: model-workspace
-          persistentVolumeClaim:
-            claimName: model-pvc

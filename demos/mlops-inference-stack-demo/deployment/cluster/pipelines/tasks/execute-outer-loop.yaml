@@ -12,13 +12,15 @@ spec:
     - name: GIT_URL
       description: URL of Git repository
       type: string
+    - name: GIT_BRANCH
+      description: Git branch
     - name: WORK_DIRECTORY
       description: Directory to use
       type: string
   steps:
     - name: patch-modelcar-quadlet
       workingDir: $(workspaces.output.path)/$(params.WORK_DIRECTORY)/quadlets
-      image: quay.io/redhat-cop/tekton-task-helm:3.6.3
+      image: quay.io/appuio/oc:v4.19
       script: |
         #!/bin/bash
         sed -i "s|Image=.*|Image=image-registry.openshift-image-registry.svc:5000/sample-chat-model:$(params.VERSION)|" model-car.container
@@ -32,13 +34,13 @@ spec:
         oc tag inference-stack-quadlet:latest inference-stack-quadlet:$(params.VERSION)
     - name: patch-fleet-spec
       workingDir: $(workspaces.output.path)/$(params.WORK_DIRECTORY)/deployment
-      image: quay.io/redhat-cop/tekton-task-helm:3.6.3
+      image: quay.io/appuio/oc:v4.19
       script: |
         #!/bin/sh
         yq eval -i .spec.template.spec.applications[0].image=\"image-registry.openshift-image-registry.svc:5000/inference-stack-quadlet:$(params.VERSION)\" "fleet.yaml"
     - name: commit-changes
       workingDir: $(workspaces.output.path)/$(params.WORK_DIRECTORY)
-      image: quay.io/redhat-cop/ubi8-git:latest
+      image: quay.io/appuio/oc:v4.19
       script: |
         #!/bin/sh
         # Commit the changes 
@@ -46,12 +48,13 @@ spec:
         git config --global user.name "Tekton"
         git config --global push.default simple
         git config --global --add safe.directory '*'
+        GIT_TOKEN=$(oc get secret github-pat -n mlops-kfp -o jsonpath='{.data.pat}' | base64 --decode)
+        git config --global url."https://${GIT_TOKEN}@github.com/".insteadOf "https://github.com/"
+        if [ -z "$GIT_TOKEN" ]; then echo "ERROR: GIT_TOKEN is empty"; exit 1; fi
         git add quadlets/model-car.container
         git add deployment/fleet.yaml
         git commit -m "AUTOMATED COMMIT - Updated model and inference stack to version $(params.VERSION)" || rc=$?
-        git remote set-url origin $(params.GIT_URL)
-        git push origin HEAD
-        # TODO revert back to : git push origin HEAD:main
+        git push origin HEAD:$(params.GIT_BRANCH)
     - name: rollout-fleet
       workingDir: $(workspaces.output.path)/$(params.WORK_DIRECTORY)/deployment
       image: quay.io/appuio/oc:v4.19

@@ -3,6 +3,7 @@ kind: EventListener
 metadata:
   name: ct-listener
 spec:
+  serviceAccountName: pipeline
   triggers:
     - triggerRef: ct-git-trigger
 ---
