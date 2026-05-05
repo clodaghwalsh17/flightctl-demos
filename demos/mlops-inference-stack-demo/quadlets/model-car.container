@@ -3,7 +3,7 @@ Description=Model Car Init Container
 Before=vllm-server.service
 
 [Container]
-Image=default-route-openshift-image-registry.apps.rosa.catoconn-ray-et.bo0z.p3.openshiftapps.com/sample-chat-model:d5ea6ed960
+Image=default-route-openshift-image-registry.apps.rosa.catoconn-ray-et.bo0z.p3.openshiftapps.com/sample-chat-model:74d2d44b5f
 Volume=model-storage.volume:/target:Z
 PodmanArgs=--user=0
 Exec=sh -c "cp -r /models/* /target/"
