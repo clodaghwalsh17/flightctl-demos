@@ -16,7 +16,7 @@ spec:
       applications:
         - name: inference-stack
           appType: quadlet
-          image: image-registry.openshift-image-registry.svc:5000/inference-stack-quadlet:f9aa57bbdc
+          image: image-registry.openshift-image-registry.svc:5000/inference-stack-quadlet:70cc4d499e
       config:
         - name: inference-server-metrics
           gitRef:
